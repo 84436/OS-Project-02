@@ -1,0 +1,6 @@
+# VSCode workspace
+.vscode
+
+# Standard bin/obj
+bin
+obj
