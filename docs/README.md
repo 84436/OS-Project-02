@@ -4,5 +4,5 @@
 
 ### Thông tin đồ án
 
--   Đồ án thứ 2 cho môn Hệ Điều Hành (CSC10007-18CLC2), FIT @ HCMUS
+-   Đồ án thứ 2 cho môn Hệ Điều Hành (CSC10007-18CLC3), FIT @ HCMUS
 
