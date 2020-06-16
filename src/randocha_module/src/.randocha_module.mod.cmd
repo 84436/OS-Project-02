@@ -1,0 +1,1 @@
+cmd_/home/t3bol90/tmp/OS-Project-02/src/randocha_module/src/randocha_module.mod := { echo  /home/t3bol90/tmp/OS-Project-02/src/randocha_module/src/randocha_module.o; echo; } > /home/t3bol90/tmp/OS-Project-02/src/randocha_module/src/randocha_module.mod
