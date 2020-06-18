@@ -1,3 +1,0 @@
-/home/t3bol90/Desktop/GitWorkspace/OS-Project-02/code_base/radocha_module/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/t3bol90/Desktop/GitWorkspace/OS-Project-02/code_base/radocha_module/cmake-build-debug/CMakeFiles/randocha_module.dir
-/home/t3bol90/Desktop/GitWorkspace/OS-Project-02/code_base/radocha_module/cmake-build-debug/CMakeFiles/edit_cache.dir
