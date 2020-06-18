@@ -1,22 +1,11 @@
 // Tested on Ubuntu 14.04.5 (linux-4.4.0-31-generic)
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
+#include <linux/init.h> // module init and exit
+#include <linux/module.h> // required for *all* modules
+#include <linux/kernel.h> // kernel macros and functions
 #include <linux/syscalls.h>
-#include <linux/highmem.h>
-#include <linux/fs.h>
-#include <linux/sched.h>
-#include <linux/moduleparam.h>
-#include <linux/unistd.h>
-#include <linux/slab.h>
 #include <linux/fdtable.h>
-
-#include <asm/unistd.h>
-#include <asm/cacheflush.h>
-#include <asm/pgtable_types.h>
-#include <asm/cacheflush.h>
-
+#include <linux/slab.h> // kmalloc, kfree
 // Module information
 MODULE_LICENSE("GPL");
 
@@ -93,7 +82,7 @@ static int __init hook_init(void) {
     printk(KERN_INFO "[syshook] sys_call_table found at %p\n", SYS_CALL_TABLE);
     open_original = SYS_CALL_TABLE[__NR_open];
     write_original = SYS_CALL_TABLE[__NR_write];
-    printk(KERN_INFO "[syshook] original open() and write() backed up\n", SYS_CALL_TABLE);
+    printk(KERN_INFO "[syshook] original open() and write() backed up\n");
     
     printk(KERN_INFO "[syshook] original open() at %p\n", open_original);
     printk(KERN_INFO "[syshook] original write() at %p\n", write_original);
@@ -121,4 +110,3 @@ static void __exit hook_cleanup(void){
 
 module_init(hook_init);
 module_exit(hook_cleanup);
-

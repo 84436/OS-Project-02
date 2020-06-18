@@ -1,1 +1,0 @@
-rmmod randocha_module

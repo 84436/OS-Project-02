@@ -1,8 +1,6 @@
-EXTRA_CFLAGS = -Wall
-
 obj-m        += randocha_module.o
-
-KDIR = /lib/modules/$(shell uname -r)/build
+KDIR		 = /lib/modules/$(shell uname -r)/build
+EXTRA_CFLAGS = -Wall
 
 all:
 	make -C $(KDIR) M=$(PWD)
