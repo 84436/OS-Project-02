@@ -22,7 +22,7 @@ static void** SYS_CALL_TABLE = NULL;
 //    SYS_CALL_TABLE = (void**)kallsyms_lookup_name("sys_call_table");
 //}
 
-// Alternatively, manually grab and hard-core the address.
+// Alternatively, manually grab and hard-code the address.
 // grep -w sys_call_table /boot/System.map-$(uname -r) | cut -d ' ' -f 1
 
 // pte = Page Table Entry
