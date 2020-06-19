@@ -20,7 +20,7 @@
     * Toàn: `randocha` (character device để tạo số ngẫu nhiên)
     * Thiện: `syshook` (module hook vào các system call `open()` và `write()`)
     * Phụng: viết báo cáo, sửa lỗi.
-* Tiến độ: đã hoàn thành 99% (phần `syshook` xem **Thiết kế** để biết khuyết điểm của cách làm hiện tại)
+* Tiến độ: đã hoàn thành 99% (`syshook`: xem **Thiết kế** để biết khuyết điểm của cách làm hiện tại)
 
 
 
@@ -32,19 +32,25 @@
 
 Trong quá trình nạp/gỡ module và thử nghiệm, ta cần xem các thông báo từ kernel và hệ thống (hay gọi đúng hơn là **d**iagnostic **mes**sa**g**e). Để có thể tiện xem (scroll và tìm kiếm) output của `dmesg`, ta dùng công cụ `less`.
 
-Đối với `dmesg` phiên bản cũ (đã được thử trên môi trường lập trình nói trên), chạy:
+Đối với `dmesg` phiên bản cũ (được đi kèm trong phiên bản Ubuntu nói trên), chạy:
 
 ```bash
 # [F]ollow input
 dmesg | less +F
 ```
 
-Đối với `dmesg` phiên bản mới hơn (`utils-linux >= 2.25`), chạy:
+Đối với `dmesg` phiên bản mới hơn, chạy:
 
 ```bash
 # follo[-w] input (update khi có thay đổi), [-H]uman-readable output, co[-L]orize;
 # output [-R]aw control chars, [F]ollow input
 dmesg -H -L=always | less -R +F
+```
+
+Để xóa hết log trong `dmesg`
+
+```bash
+dmesg -C
 ```
 
 
@@ -56,7 +62,6 @@ dmesg -H -L=always | less -R +F
 ```bash
 // Build module và user tool
 $ make
-$ gcc -o user_space user_space.c
 
 // Nạp module
 # insmod randocha.ko
@@ -82,33 +87,28 @@ Có 2 thành phần trong `randocha`:
 
 
 
-### Cơ cấu (flow)
+### Cơ chế hoạt động
 
 - **File operations**
 
   Cấu trúc `file_operations` dùng để định nghĩa các hàm driver interface theo chuẩn kernel cho trước chỉ đến địa chỉ hàm ta muốn, gồm:
 
   - `dev_open`: open device
-
-      Các tiến trình khác nhau gọi module này một cách riêng biệt, (tại sao cần count thế?) 
-
+      - Về cái counter `open_cnt` xuất hiện trong `dmesg`: Các tiến trình khác nhau gọi module này một cách riêng biệt; nếu xuất ra cùng một thông báo sẽ không thể phân biệt được tiến trình nào đã gọi thiết bị
   - `dev_read`: Khởi tạo số ngẫu nhiên và trả lại cho người dùng (ở đây là `user_space`)
-
-      //TODO: cơ chế sinh số ngẫu nhiên
-
+      - Cơ chế sinh số ngẫu nhiên: dùng `get_random_byte()` để random từng byte một trên cả 4 byte.
+      - 4 byte đó sẽ được đưa lại cho tiến trình ở user space
   - `dev_release`: Sau khi trả về số ngẫu nhiên, thông báo đóng device
 
-- **Khởi tạo module (init)**
+- **Khi khởi tạo module**
 
-  Gồm các bước được thể hiện qua sơ đồ sau: major number $\rightarrow$ device class $\rightarrow$ device
+  1.  Đăng kí major number cho device với `file_operations` được khai báo trước. Ở đây ta để major number được cấp phát động thay vì gán tĩnh
+  2.  Tạo device class với tên được định nghĩa sẵn
+  3.  Tạo device với các thông tin đã khởi tạo ở bước 1 và 2
 
-  * Bước 1: Đăng kí major number cho device với `file_operations` được khai báo trước. Ở đây ta để major number được cấp phát động thay vì gán tĩnh
-  * Bước 2: Tạo device class với tên được định nghĩa sẵn
-  * Bước 3: Tạo device với các thông tin đã khởi tạo ở bước 1 và 2
+  Tất cả các bước đều đã xử lí lỗi, nếu không thực hiện được sẽ đưa ra lỗi tương ứng.
 
-  Tất cả các bước đều đã xử lí lỗi, nếu không thực hiện được sẽ đưa ra lỗi tương ứng
-
-- **Hủy module (exit)**
+- **Khi gỡ module**
 
     Ngược lại với quá trình khởi tạo module, quá trình hủy module được thể hiện qua sơ đồ: major device $\rightarrow$ device class $\rightarrow$ major number
 
@@ -117,9 +117,14 @@ Có 2 thành phần trong `randocha`:
       - Device: không thể unregister device
       - Major number: giải phóng major number đăng kí với device bằng hàm `unregister_chrdev`
 
-       
 
-### VD (flow mẫu)
+
+
+### Ảnh chụp chạy mẫu
+
+![image-20200619204001401](README.images/image-20200619204001401.png)
+
+Hình: `randocha_module` đã được nạp thành công; công cụ test đã được gọi 4 lần.
 
 
 
@@ -155,20 +160,42 @@ $ make clean
 
 Phần `syshook`này chỉ bao gồm một standalone module.
 
-Module hiện tại chưa thể tìm địa chỉ của `sys_call_table` (system call table) một cách linh động nên hiện tại sẽ gán cứng. Địa chỉ này cần được sửa lại (xem **Hướng dẫn nhanh**) trước khi module được build và nạp.
+Module hiện tại chưa thể tìm địa chỉ của `sys_call_table` (system call table) một cách linh động nên sẽ gán cứng. Địa chỉ này cần được sửa lại (xem **Hướng dẫn nhanh**) trước khi module được build và nạp.
 
 
 
-### Cơ cấu (flow)
+### Cơ chế hoạt động
 
-- Khởi tạo module (init)
+- **Khi khởi tạo module:**
   
-  - Đọc `sys_call_table`
-  - Lưu lại hàm xử lý syscall gốc cho `open()` và `writ
+  - Đọc `sys_call_table` và làm cho bảng đó ghi được (r/w)
+  - Lưu lại con trỏ trỏ đến hàm xử lý syscall gốc cho `open()` và `write()`, sau đó thay thế với con trỏ đến hàm của module
   
-- Hủy module (exit)
+- **Trong quá trình module chạy:**
 
-### VD (flow mẫu)
+    Mỗi một lần syscall `open()` hay `write()` được gọi, hàm xử lý tương ứng của module sẽ được gọi. Lúc đó, hàm sẽ ghi thông tin cần thiết ra log của kernel và truyền các tham số đầu vào về hàm xử lý syscall gốc tương ứng.
+
+    - Đối với `open()`, `open_custom()` sẽ ghi vào log: tên tiến trình đã gọi, tên file được mở
+    - Đối với `write()`, `write_custom()` sẽ ghi vào log: tên tiến trình đã gọi, tên file đang ghi và số byte đã ghi
+
+- **Khi gỡ module:**
+
+    - Khôi phục lại syscall gốc cho `open()` và `write()`
+    - Làm cho `sys_call_table` trở thành chỉ đọc (r/o)
+
+
+
+### Ảnh chụp chạy mẫu
+
+![image-20200619204144209](README.images/image-20200619204144209.png)
+
+Hình 1: `syshook` đã được nạp thành công; địa chỉ bảng `sys_call_table`, các hàm xử lý syscall gốc, các hàm xử lý syscall của module và thông tin mỗi hooked syscall được in ra.
+
+
+
+![image-20200619204221293](README.images/image-20200619204221293.png)
+
+Hình 2: `syshook` đã được gỡ thành công.
 
 
 
@@ -178,9 +205,11 @@ Module hiện tại chưa thể tìm địa chỉ của `sys_call_table` (system
 
 ## Tài liệu tham khảo
 
-- Tài liệu của cô
-- GitHub repo của anh Khang (@khang99)
-- GitHub repo của anh Thế Anh 16CNTN (@vltanh)
-- [Sourcerer – "Writing a Simple Linux Kernel Module"](https://blog.sourcerer.io/writing-a-simple-linux-kernel-module-d9dc3762c234)
+- Tài liệu đã được cung cấp
+- [GitHub repo của @khang99](https://github.com/npkhang99/CSC10007-Project2)
+- [GitHub repo của @vltanh](https://github.com/vltanh/SystemCall-Hook)
+- [GitHub repo của @johnthomasjtk](https://github.com/johnthomasjtk/OS-System-call-hooking)
+- [Medium – Sourcerer – "Writing a Simple Linux Kernel Module"](https://blog.sourcerer.io/writing-a-simple-linux-kernel-module-d9dc3762c234)
 - [The Linux Kernel Programming Guide – Chapter 2, "Hello World"](https://tldp.org/LDP/lkmpg/2.6/html/c119.html)
+- [Medium – InfoSec Write-Ups – "Linux Kernel Module Rootkit — Syscall Table Hijacking"](https://medium.com/bugbountywriteup/linux-kernel-module-rootkit-syscall-table-hijacking-8f1bc0bd099c)
 
