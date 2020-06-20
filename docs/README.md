@@ -11,6 +11,8 @@
 - Môi trường
   - Ngôn ngữ lập trình: `C`, biên dịch với `gcc`
   - Môi trường lập trình: `Ubuntu 14.04.5 LTS` (phiên bản nhân Linux: `4.4.0-31-generic`) 
+    - **Ghi chú**: Mã nguồn của các module của nhóm trong đồ án này chỉ được viết và test trên môi trường lập trình nói trên. Các Linux distro phiên bản gần đây đã chuyển qua nhân Linux `5.x` trở lên nên sẽ có một số điểm không tương thích/một số tính năng bị mất đi vì lý do bảo mật kernel.
+      (VD: system call table trong `syshook` không thể đọc/ghi được theo phương pháp tìm địa chỉ của `sys_call_table` trong `System.map` — việc cố gắng đọc/ghi sẽ dẫn đến segfault và/hoặc kernel panic.)
 
 
 
@@ -20,7 +22,8 @@
     * Toàn: `randocha` (character device để tạo số ngẫu nhiên)
     * Thiện: `syshook` (module hook vào các system call `open()` và `write()`)
     * Phụng: viết báo cáo, sửa lỗi.
-* Tiến độ: đã hoàn thành 99% (`syshook`: xem **Thiết kế** để biết khuyết điểm của cách làm hiện tại)
+*  Tiến độ: đã hoàn thành 100%
+    * `syshook`: hiện tại không thể lấy địa chỉ của `sys_call_table` linh động (cần gán cứng)
 
 
 
